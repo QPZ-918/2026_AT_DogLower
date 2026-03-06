@@ -186,7 +186,7 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
 // kp 应为0.00f
 float wheel_Kp=0.00f; 
 float wheel_exp_rad=0.0f;
-float wheel_Kd=0.00f;
+float wheel_Kd=0.50f;
 
 
 #if (test)
@@ -199,7 +199,10 @@ void WheelControlTask(void* param)
 {
     TickType_t last_wake_time=xTaskGetTickCount();
 
-        DMH6215_Enable(&DM_motor_);
+     for (uint8_t i = 0; i < 4; i++)
+    {
+        DMH6215_Enable(&leg[i].wheel.wheel_);
+    }
     
     while(1)
     {
