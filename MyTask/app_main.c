@@ -9,7 +9,7 @@
 
 
 extern RS485_t rs485bus;
-//  extern RS485_t rs485bus_2;
+  extern RS485_t rs485bus2;
 extern uint8_t remote_control_buf[12];
 TaskHandle_t usb_send_task_handle;
 TaskHandle_t usb_recv_task_handle;
@@ -66,6 +66,7 @@ void app_main()
 	/*
 	*/
 	RS485Init(&rs485bus, &huart2, NULL, NULL);	//该串口拥有硬件流控制脚，所以写NULL表示使用硬件流控制脚
+	RS485Init(&rs485bus2, &huart3, NULL, NULL);
 	remote_semaphore =	xSemaphoreCreateBinary();
 	xTaskCreate(MotorControlTask,"MotorComm",256,NULL,6,&unitree_task_handle);
 	xTaskCreate(MotorSendTask,"MotorSend",256,NULL,4,&usb_send_task_handle);
