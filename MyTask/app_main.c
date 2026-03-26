@@ -15,7 +15,8 @@ TaskHandle_t usb_send_task_handle;
 TaskHandle_t usb_recv_task_handle;
 //TaskHandle_t motor_control_task_handle;
 TaskHandle_t wheel_control_task_handle;
-TaskHandle_t unitree_task_handle;
+TaskHandle_t unitree_front_task_handle;
+TaskHandle_t unitree_back_task_handle;
 TaskHandle_t uart7_remocont_task_handle;
 TaskHandle_t uart2_recovery_handle;
 
@@ -68,7 +69,8 @@ void app_main()
 	RS485Init(&rs485bus, &huart2, NULL, NULL);	//该串口拥有硬件流控制脚，所以写NULL表示使用硬件流控制脚
 	RS485Init(&rs485bus2, &huart3, NULL, NULL);
 	remote_semaphore =	xSemaphoreCreateBinary();
-	xTaskCreate(MotorControlTask,"MotorComm",256,NULL,6,&unitree_task_handle);
+	xTaskCreate(MotorControlTask_Front,"MotorComm_Front",256,NULL,6,&unitree_front_task_handle);
+	xTaskCreate(MotorControlTask_Back,"MotorComm_Back",256,NULL,6,&unitree_back_task_handle);
 	xTaskCreate(MotorSendTask,"MotorSend",256,NULL,4,&usb_send_task_handle);
 	xTaskCreate(MotorRecvTask,"MotorRecv",128,NULL,5,&usb_recv_task_handle);
 	// 创建 USART2 恢复任务，处理硬件噪声导致的连续错误恢复

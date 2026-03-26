@@ -38,8 +38,8 @@ uint32_t error_cnt = 0;        // USART2(485_1) 通讯错误次数
 uint32_t error_cnt2 = 0;       // USART3(485_2) 通讯错误次数
 uint32_t success_cnt = 0;      // USART2(485_1) 通讯成功次数
 uint32_t success_cnt2 = 0;     // USART3(485_2) 通讯成功次数
-uint32_t reast_cnt = 0;        // USART2(485_1) 复位次数
-uint32_t reast_cnt2 = 0;       // USART3(485_2) 复位次数
+uint32_t reast_cnt_front = 0;        // USART2(485_1) 复位次数
+uint32_t reast_cnt_back = 0;       // USART3(485_2) 复位次数
 
 uint32_t cur_size_USB_Re = 0;  // USB 当前接收数据长度
 uint32_t cnt_USB_Re = 0;       // USB 接收总次数
@@ -49,13 +49,16 @@ QueueHandle_t cdc_recv_semphr; // USB CDC 接收信号量（二进制）
 /********************
  * 全局变量 - 系统状态
  ********************/
-uint32_t first_run = 5;        // 上电初始化计数，归零后允许 USB 上传数据
+uint32_t first_run_front = 5;        // 上电初始化计数，归零后允许 USB 上传数据
+uint32_t first_run_back = 5;        // 上电初始化计数，归零后允许 USB 上传数据
 uint8_t allow_send = 0;        // 数据发送允许标志：1-允许，0-禁止
 uint32_t watch_dog_id[24];     // 看门狗监测的电机 ID 数组（24 个电机，含长时掉线检测）
 uint16_t count_Watch_dog = 0;  // 看门狗掉线电机数量统计
-uint32_t reset_uart = 0;       // 485 总线复位标志位
+uint32_t reset_uart_front = 0;       // 485 总线复位标志位
+uint32_t reset_uart_back = 0;       // 485 总线复位标志位
 uint32_t bad_Motor = 0;        // 电机故障标志位（短时掉线，bit 位对应电机索引）
-int err_check = 0;             // 每轮通讯检查：12 个电机的接收成功个数
+int err_check_front = 0;             // 每轮通讯检查：6 个电机的接收成功个数
+int err_check_back = 0;               // 每轮通讯检查：6 个电机的接收成功个数
 
 
 /**********************
@@ -117,31 +120,31 @@ Leg_t leg[4] = {
     // 左前腿 (Leg 0)
     {
         .joint[0] = {.motor = {.motor_id = 0x01, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -4.02757889f},
-        .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &rs485bus2}, .inv_motor = 1, .pos_offset = -6.77129902f},
+        .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -6.77129902f},
         .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 6.47869856f},
         .wheel    = {.wheel_ = {.hcan = &hfdcan1, .id = 0x01}, .inv_wheel = 1}
     },
     
     // 右前腿 (Leg 1)
     {
-        .joint[0] = {.motor = {.motor_id = 0x04, .rs485 = &rs485bus2}, .inv_motor = 1, .pos_offset = 4.29111939f},
+        .joint[0] = {.motor = {.motor_id = 0x04, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 4.29111939f},
         .joint[1] = {.motor = {.motor_id = 0x05, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 6.60819724f},
-        .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &rs485bus2}, .inv_motor = 1, .pos_offset = -6.20990329f},
+        .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = -6.20990329f},
         .wheel    = {.wheel_ = {.hcan = &hfdcan1, .id = 0x02}, .inv_wheel = 1}
     },
     
     // 左后腿 (Leg 2)
     {
-        .joint[0] = {.motor = {.motor_id = 0x07, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 4.09088597f},
+        .joint[0] = {.motor = {.motor_id = 0x07, .rs485 = &rs485bus2}, .inv_motor = 1, .pos_offset = 4.09088597f},
         .joint[1] = {.motor = {.motor_id = 0x08, .rs485 = &rs485bus2}, .inv_motor = 1, .pos_offset = -6.67971121f},
-        .joint[2] = {.motor = {.motor_id = 0x09, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 6.661729104f},
+        .joint[2] = {.motor = {.motor_id = 0x09, .rs485 = &rs485bus2}, .inv_motor = 1, .pos_offset = 6.661729104f},
         .wheel    = {.wheel_ = {.hcan = &hfdcan1, .id = 0x03}, .inv_wheel = 1}
     },
     
     // 右后腿 (Leg 3)
     {
         .joint[0] = {.motor = {.motor_id = 0x0A, .rs485 = &rs485bus2}, .inv_motor = 1, .pos_offset = -4.19752234f},
-        .joint[1] = {.motor = {.motor_id = 0x0B, .rs485 = &rs485bus}, .inv_motor = 1, .pos_offset = 6.64519156f},
+        .joint[1] = {.motor = {.motor_id = 0x0B, .rs485 = &rs485bus2}, .inv_motor = 1, .pos_offset = 6.64519156f},
         .joint[2] = {.motor = {.motor_id = 0x0C, .rs485 = &rs485bus2}, .inv_motor = 1, .pos_offset = -6.56194712f},
         .wheel    = {.wheel_ = {.hcan = &hfdcan1, .id = 0x04}, .inv_wheel = 1}
     }
@@ -157,14 +160,17 @@ Leg_t leg[4] = {
 
 
 
-void MotorControlTask(void *param) // 将数据发送到电机，并从电机接收数据
+void MotorControlTask_Front(void *param) // 将数据发送到电机，并从电机接收数据
 {
     TickType_t last_wake_time = xTaskGetTickCount();
+    taskENTER_CRITICAL();
+    if(!(TIM13->CR1 & TIM_CR1_CEN))
 		HAL_TIM_Base_Start_IT(&htim13);
+    taskEXIT_CRITICAL();
     while (1)
     {
-        err_check = 0;
-        for (int i = 0; i < 4; i++)
+        err_check_front = 0;
+        for (int i = 0; i < 2; i++)
         {
             for (int j = 0; j < 3; j++)
             {
@@ -178,18 +184,24 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
                 int ret = GoMotorRecv(&leg[i].joint[j].motor);
                 if (ret)
                 {
+                    taskENTER_CRITICAL();
                     bad_Motor &= (~(0x0001 << (i * 3 + j)));
-                    err_check++;
+                    err_check_front++;
+                    taskEXIT_CRITICAL();
                     //legs_state.watch_dog = legs_state.watch_dog & (~(0x0001 << (i * 3 + j)));
-                }else bad_Motor |= (0x0001 << (i * 3 + j));
+                }else
+                {
+                    taskENTER_CRITICAL();
+                    bad_Motor |= (0x0001 << (i * 3 + j));
+                    taskEXIT_CRITICAL();
+                } 
                  }
             
         }
-        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(3));
-        if (reset_uart)
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(2));
+        if (reset_uart_front)
         {
-            if(bad_Motor & 0x555)
-            {
+
             HAL_UART_DMAStop(&huart2);
             vTaskDelay(2);
             HAL_UART_DeInit(&huart2);
@@ -200,10 +212,57 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
 
             // 4. 重新初始化 UART + DMA，MspInit 会自动执行
             MX_USART2_UART_Init();
-            reast_cnt++;
-            }
-            if(bad_Motor & 0xAAA)
+            reast_cnt_front++;
+            reset_uart_front = 0;
+            
+        }
+
+        if (err_check_front == 6 && first_run_front)
+            first_run_front--;
+    }
+}
+
+void MotorControlTask_Back(void *param) // 将数据发送到电机，并从电机接收数据
+{
+    TickType_t last_wake_time = xTaskGetTickCount();
+    taskENTER_CRITICAL();
+    if(!(TIM13->CR1 & TIM_CR1_CEN))
+		HAL_TIM_Base_Start_IT(&htim13);
+    taskEXIT_CRITICAL();
+    while (1)
+    {
+        err_check_back = 0;
+        for (int i = 2; i < 4; i++)
+        {
+            for (int j = 0; j < 3; j++)
             {
+                 
+                GoMotorSend(&leg[i].joint[j].motor, leg[i].joint[j].exp_torque / 6.33f * leg[i].joint[j].inv_motor,
+                            leg[i].joint[j].exp_omega * 6.33f * leg[i].joint[j].inv_motor,
+                            leg[i].joint[j].exp_rad * 6.33f * leg[i].joint[j].inv_motor + leg[i].joint[j].pos_offset + setup_offset[i][j],
+                            leg[i].joint[j].Kp, leg[i].joint[j].Kd);
+
+
+                int ret = GoMotorRecv(&leg[i].joint[j].motor);
+                if (ret)
+                {
+                    taskENTER_CRITICAL();
+                    bad_Motor &= (~(0x0001 << (i * 3 + j)));
+                    err_check_back++;
+                    taskEXIT_CRITICAL();
+                    //legs_state.watch_dog = legs_state.watch_dog & (~(0x0001 << (i * 3 + j)));
+                }else
+                {
+                    taskENTER_CRITICAL();
+                    bad_Motor |= (0x0001 << (i * 3 + j));
+                    taskEXIT_CRITICAL();
+                }
+                 }
+            
+        }
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(2));
+        if (reset_uart_back)
+        {
             HAL_UART_DMAStop(&huart3);
             vTaskDelay(2);
             HAL_UART_DeInit(&huart3);
@@ -214,14 +273,12 @@ void MotorControlTask(void *param) // 将数据发送到电机，并从电机接
 
             // 4. 重新初始化 UART + DMA，MspInit 会自动执行
             MX_USART3_UART_Init();
-            reast_cnt2++;
-            }
-            reset_uart = 0;
-            
+            reast_cnt_back++;
+            reset_uart_back = 0;
         }
 
-        if (err_check == 12 && first_run)
-            first_run--;
+        if (err_check_back == 6 && first_run_back)
+            first_run_back--;
     }
 }
 
@@ -352,7 +409,7 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
     cdc_recv_semphr = xSemaphoreCreateBinary();
     xSemaphoreTake(cdc_recv_semphr, 0);
     vTaskDelay(1000);
-    while (first_run) // 等待电机数据准备好
+    while (first_run_back!=0 || first_run_front!=0) // 等待电机数据准备好
         vTaskDelay(1);
     // TODO:上电时电机角度在极点附近的处理
     //        if(leg[0].joint[0].motor.state.rad>4.0f)

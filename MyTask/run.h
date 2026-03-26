@@ -165,7 +165,8 @@ typedef struct {
 #pragma pack()
 
 
-void MotorControlTask(void* param);
+void MotorControlTask_Front(void* param);
+void MotorControlTask_Back(void* param);
 void MotorSendTask(void* param);
 void MotorRecvTask(void* param);
 void WheelControlTask(void* param);
