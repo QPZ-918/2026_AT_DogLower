@@ -24,6 +24,11 @@ QueueHandle_t remote_semaphore;
 
 extern uint8_t data[11];
 
+uint8_t dma1_send_buf[sizeof(GOMotor_SendPack_t)] __attribute__((section("RAM_D2_485"), aligned(32)));
+uint8_t dma1_recv_buf[sizeof(GOMotor_ReceivePack_t)] __attribute__((section("RAM_D2_485"), aligned(32)));
+uint8_t dma2_send_buf[sizeof(GOMotor_SendPack_t)] __attribute__((section("RAM_D2_485"), aligned(32)));
+uint8_t dma2_recv_buf[sizeof(GOMotor_ReceivePack_t)] __attribute__((section("RAM_D2_485"), aligned(32)));
+
 void Wheel(uint8_t pos, uint8_t *r, uint8_t *g, uint8_t *b)
 {
     if(pos < 85)
@@ -66,8 +71,8 @@ void app_main()
 	
 	/*
 	*/
-	RS485Init(&rs485bus, &huart2, NULL, NULL);	//该串口拥有硬件流控制脚，所以写NULL表示使用硬件流控制脚
-	RS485Init(&rs485bus2, &huart3, NULL, NULL);
+	RS485Init(&rs485bus, &huart2, NULL, NULL,dma1_send_buf,dma1_recv_buf);	//该串口拥有硬件流控制脚，所以写NULL表示使用硬件流控制脚
+	RS485Init(&rs485bus2, &huart3, NULL, NULL,dma2_send_buf,dma2_recv_buf);
 	remote_semaphore =	xSemaphoreCreateBinary();
 	xTaskCreate(MotorControlTask_Front,"MotorComm_Front",256,NULL,6,&unitree_front_task_handle);
 	xTaskCreate(MotorControlTask_Back,"MotorComm_Back",256,NULL,6,&unitree_back_task_handle);

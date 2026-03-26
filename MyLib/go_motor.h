@@ -48,6 +48,7 @@ typedef struct
     uint8_t motor_id;
     GOMotor_SendPack_t send_pack_buffer;       //发送缓冲区
     
+    
     struct{
         float torque;
         float velocity;

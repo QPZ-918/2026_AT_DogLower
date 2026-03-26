@@ -40,7 +40,7 @@
 
 # Keil 输出文件夹（默认是 Objects、Listings）
 /MDK-ARM/build/
-/MDK-ARM/chassis/
+/MDK-ARM/Dog_lower/
 /MDK-ARM/DebugConfig/
 /MDK-ARM/RTE/
 /MDK-ARM/.vscode/

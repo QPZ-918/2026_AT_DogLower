@@ -3,7 +3,6 @@
 
 uint32_t GoMotorSend(GO_MotorHandle_t *motor, float torque, float velocity, float position, float kp, float kd)
 {
-    static uint8_t dma_send_buf[sizeof(GOMotor_SendPack_t)] __attribute__((section("RAM_D2_485"), aligned(32)));
     motor->send_pack_buffer.head=0xEEFE;
     motor->send_pack_buffer.cmd=(motor->motor_id&0x0F)|0x10;
     motor->send_pack_buffer.torque=(((double)torque)*256.0);
@@ -13,20 +12,18 @@ uint32_t GoMotorSend(GO_MotorHandle_t *motor, float torque, float velocity, floa
     motor->send_pack_buffer.vel_k=((double)kd)*1280.0;
     motor->send_pack_buffer.crc=crc_ccitt(0, (uint8_t *)(&motor->send_pack_buffer), sizeof(GOMotor_SendPack_t)-2);
 
-    memcpy(dma_send_buf,&motor->send_pack_buffer,sizeof(GOMotor_SendPack_t));
-    return RS485Send(motor->rs485,dma_send_buf,sizeof(GOMotor_SendPack_t),2);
+    return RS485Send(motor->rs485,&motor->send_pack_buffer,sizeof(GOMotor_SendPack_t),2);
 }
 
 uint32_t GoMotorRecv(GO_MotorHandle_t *motor)
 {
-	  static uint8_t buffer[sizeof(GOMotor_ReceivePack_t)] __attribute__((section("RAM_D2_485"), aligned(32)));
     uint32_t size=0;
-    RS485Recv(motor->rs485,buffer,sizeof(GOMotor_ReceivePack_t),2,&size);
+    RS485Recv(motor->rs485,buffer[motor->motor_id - 1],sizeof(GOMotor_ReceivePack_t),2,&size);
     if(size!=sizeof(GOMotor_ReceivePack_t))     //数据包长度错误
         return 0;
-    if(crc_ccitt(0, buffer, sizeof(GOMotor_ReceivePack_t)-2)!=((GOMotor_ReceivePack_t*)buffer)->crc)     //校验错误
+    if(crc_ccitt(0, buffer[motor->motor_id - 1], sizeof(GOMotor_ReceivePack_t)-2)!=((GOMotor_ReceivePack_t*)buffer[motor->motor_id - 1])->crc)     //校验错误
         return 0;
-    GOMotor_ReceivePack_t* p_buf=(GOMotor_ReceivePack_t*)buffer;
+    GOMotor_ReceivePack_t* p_buf=(GOMotor_ReceivePack_t*)buffer[motor->motor_id - 1];
     if((p_buf->cmd&0x0F)!=motor->motor_id)  //检查电机ID
         return 0;
     motor->state.mode=p_buf->cmd>>4;
