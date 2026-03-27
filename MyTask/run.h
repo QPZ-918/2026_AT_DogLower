@@ -15,7 +15,7 @@
 typedef struct {
     GO_MotorHandle_t motor;    /**< 电机句柄（包含 ID、RS485 总线指针等） */
     float pos_offset;          /**< 角度零点偏移量 (rad)，用于校准机械安装误差 */
-    int8_t inv_motor;          /**< 电机方向标志：1-正转，-1-反转 */
+    float inv_motor;          /**< 电机方向标志：1-正转，-1-反转 */
 
     float exp_rad;             /**< 期望角度 (rad) */
     float exp_omega;           /**< 期望角速度 (rad/s) */

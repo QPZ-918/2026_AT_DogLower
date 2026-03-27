@@ -37,6 +37,8 @@
 *.tmp
 *.ini
 *.ld
+*.__i
+*._i
 
 # Keil 输出文件夹（默认是 Objects、Listings）
 /MDK-ARM/build/

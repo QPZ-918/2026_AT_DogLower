@@ -18,20 +18,20 @@ uint32_t GoMotorSend(GO_MotorHandle_t *motor, float torque, float velocity, floa
 uint32_t GoMotorRecv(GO_MotorHandle_t *motor)
 {
     uint32_t size=0;
-    RS485Recv(motor->rs485,buffer[motor->motor_id - 1],sizeof(GOMotor_ReceivePack_t),2,&size);
+	GOMotor_ReceivePack_t pack;
+    RS485Recv(motor->rs485,(uint8_t*)&pack,sizeof(GOMotor_ReceivePack_t),2,&size);
     if(size!=sizeof(GOMotor_ReceivePack_t))     //数据包长度错误
         return 0;
-    if(crc_ccitt(0, buffer[motor->motor_id - 1], sizeof(GOMotor_ReceivePack_t)-2)!=((GOMotor_ReceivePack_t*)buffer[motor->motor_id - 1])->crc)     //校验错误
+    if(crc_ccitt(0, (uint8_t*)&pack, sizeof(GOMotor_ReceivePack_t)-2)!=pack.crc)     //校验错误
         return 0;
-    GOMotor_ReceivePack_t* p_buf=(GOMotor_ReceivePack_t*)buffer[motor->motor_id - 1];
-    if((p_buf->cmd&0x0F)!=motor->motor_id)  //检查电机ID
+    if((pack.cmd&0x0F)!=motor->motor_id)  //检查电机ID
         return 0;
-    motor->state.mode=p_buf->cmd>>4;
-    motor->state.torque=p_buf->torque/256.0f;
-    motor->state.velocity=p_buf->velocity*2.0*3.14159265359/256.0;
-    motor->state.rad=p_buf->position/32768.0*2.0*3.14159265359;
-    motor->state.temp=(int8_t)p_buf->temp;
-    motor->state.error=p_buf->state&0x07;
+    motor->state.mode=pack.cmd>>4;
+    motor->state.torque=pack.torque/256.0f;
+    motor->state.velocity=pack.velocity*2.0*3.14159265359/256.0;
+    motor->state.rad=pack.position/32768.0*2.0*3.14159265359;
+    motor->state.temp=(int8_t)pack.temp;
+    motor->state.error=pack.state&0x07;
     return 1;
 }
 
