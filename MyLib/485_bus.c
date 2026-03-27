@@ -19,7 +19,7 @@ uint32_t RS485Send(RS485_t *rs485,uint8_t *data,uint32_t size,uint32_t time_out)
 		xSemaphoreTake(rs485->send_semphr,0);
 		if(rs485->crtl_port)
 			HAL_GPIO_WritePin(rs485->crtl_port,rs485->ctrl_pin,GPIO_PIN_SET);
-    HAL_UART_Transmit_DMA(rs485->huart,data,size);
+    HAL_UART_Transmit_DMA(rs485->huart,rs485->send_buffer,size);
     return xSemaphoreTake(rs485->send_semphr,pdMS_TO_TICKS(time_out));
 }
 
@@ -31,11 +31,11 @@ uint32_t RS485Recv(RS485_t *rs485,uint8_t*data,uint32_t size,uint32_t time_out,u
 			HAL_GPIO_WritePin(rs485->crtl_port,rs485->ctrl_pin,GPIO_PIN_RESET);     //总线转入读取模式
     //HAL_UART_Receive_DMA(rs485->huart,data,size);
 		HAL_UART_DMAStop(rs485->huart);
-		HAL_UARTEx_ReceiveToIdle_DMA(rs485->huart, data,size);
+		HAL_UARTEx_ReceiveToIdle_DMA(rs485->huart, rs485->recv_buffer,size);
 		__HAL_DMA_DISABLE_IT(rs485->huart->hdmarx, DMA_IT_HT);
 		uint32_t ret=xSemaphoreTake(rs485->recv_semphr,pdMS_TO_TICKS(time_out));
     *recv_size=rs485->last_recv_size;
-    memcpy(data,rs485->recv_buffer,recv_size);
+    memcpy(data,rs485->recv_buffer,*recv_size);
     return ret;
 }
 

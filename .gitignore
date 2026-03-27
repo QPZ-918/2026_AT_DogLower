@@ -37,6 +37,8 @@
 *.tmp
 *.ini
 *.ld
+*.__i
+*._i
 
 # Keil 输出文件夹（默认是 Objects、Listings）
 /MDK-ARM/build/
@@ -45,6 +47,11 @@
 /MDK-ARM/RTE/
 /MDK-ARM/.vscode/
 /MDK-ARM/JLinkLog.txt
+/Dog_lower/
+/Dog_lower/*.__i
+/Dog_lower/*._i
+/MDK-ARM/Dog_lower/*.__i
+/MDK-ARM/Dog_lower/*._i
 
 
 # 杂项 IDE 缓存
