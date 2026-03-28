@@ -120,33 +120,33 @@ MotorStatePack_t legs_state = {.pack_type = 0x00};    // 电机状态数据包�
 Leg_t leg[4] = {
     // 左前腿 (Leg 0)
     {
-        .joint[0] = {.motor = {.motor_id = 0x01, .rs485 = &rs485bus}, .inv_motor = 2.0f/3.0f, .pos_offset = -4.02757889f},
-        .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &rs485bus}, .inv_motor = 2.0f/3.0f, .pos_offset = -6.77129902f},
-        .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &rs485bus}, .inv_motor = 2.0f/3.0f, .pos_offset = 6.47869856f},
+        .joint[0] = {.motor = {.motor_id = 0x01, .rs485 = &rs485bus}, .inv_motor = 1.0f, .pos_offset = 0.3928f},
+        .joint[1] = {.motor = {.motor_id = 0x02, .rs485 = &rs485bus}, .inv_motor = 1.0f, .pos_offset = 9.8292f},
+        .joint[2] = {.motor = {.motor_id = 0x03, .rs485 = &rs485bus}, .inv_motor = 2.0f/3.0f, .pos_offset = -14.2399998f},
         .wheel    = {.wheel_ = {.hcan = &hfdcan1, .id = 0x01}, .inv_wheel = 1}
     },
     
     // 右前腿 (Leg 1)
     {
-        .joint[0] = {.motor = {.motor_id = 0x04, .rs485 = &rs485bus}, .inv_motor = 2.0f/3.0f, .pos_offset = 4.29111939f},
-        .joint[1] = {.motor = {.motor_id = 0x05, .rs485 = &rs485bus}, .inv_motor = 2.0f/3.0f, .pos_offset = 6.60819724f},
-        .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &rs485bus}, .inv_motor = 2.0f/3.0f, .pos_offset = -6.20990329f},
+        .joint[0] = {.motor = {.motor_id = 0x04, .rs485 = &rs485bus}, .inv_motor = 1.0f, .pos_offset = -0.4193f},
+        .joint[1] = {.motor = {.motor_id = 0x05, .rs485 = &rs485bus}, .inv_motor = 1.0f, .pos_offset = -10.1582f},
+        .joint[2] = {.motor = {.motor_id = 0x06, .rs485 = &rs485bus}, .inv_motor = 2.0f/3.0f, .pos_offset = 15.0628004f},
         .wheel    = {.wheel_ = {.hcan = &hfdcan1, .id = 0x02}, .inv_wheel = 1}
     },
     
     // 左后腿 (Leg 2)
     {
-        .joint[0] = {.motor = {.motor_id = 0x07, .rs485 = &rs485bus2}, .inv_motor = 2.0f/3.0f, .pos_offset = 4.09088597f},
-        .joint[1] = {.motor = {.motor_id = 0x08, .rs485 = &rs485bus2}, .inv_motor = 2.0f/3.0f, .pos_offset = -6.67971121f},
-        .joint[2] = {.motor = {.motor_id = 0x09, .rs485 = &rs485bus2}, .inv_motor = 2.0f/3.0f, .pos_offset = 6.661729104f},
+        .joint[0] = {.motor = {.motor_id = 0x07, .rs485 = &rs485bus2}, .inv_motor = 1.0f, .pos_offset = -0.0811f},
+        .joint[1] = {.motor = {.motor_id = 0x08, .rs485 = &rs485bus2}, .inv_motor = 1.0f, .pos_offset = -10.0143f},
+        .joint[2] = {.motor = {.motor_id = 0x09, .rs485 = &rs485bus2}, .inv_motor = 2.0f/3.0f, .pos_offset = -15.0216503f},
         .wheel    = {.wheel_ = {.hcan = &hfdcan1, .id = 0x03}, .inv_wheel = 1}
     },
     
     // 右后腿 (Leg 3)
     {
-        .joint[0] = {.motor = {.motor_id = 0x0A, .rs485 = &rs485bus2}, .inv_motor = 2.0f/3.0f, .pos_offset = -4.19752234f},
-        .joint[1] = {.motor = {.motor_id = 0x0B, .rs485 = &rs485bus2}, .inv_motor = 2.0f/3.0f, .pos_offset = 6.64519156f},
-        .joint[2] = {.motor = {.motor_id = 0x0C, .rs485 = &rs485bus2}, .inv_motor = 2.0f/3.0f, .pos_offset = -6.56194712f},
+        .joint[0] = {.motor = {.motor_id = 0x0A, .rs485 = &rs485bus2}, .inv_motor = 1.0f, .pos_offset = 0.1762f},
+        .joint[1] = {.motor = {.motor_id = 0x0B, .rs485 = &rs485bus2}, .inv_motor = 1.0f, .pos_offset = 10.101f},
+        .joint[2] = {.motor = {.motor_id = 0x0C, .rs485 = &rs485bus2}, .inv_motor = 2.0f/3.0f, .pos_offset = 15.3891392f},
         .wheel    = {.wheel_ = {.hcan = &hfdcan1, .id = 0x04}, .inv_wheel = 1}
     }
 };
@@ -164,7 +164,7 @@ Leg_t leg[4] = {
 void MotorControlTask_Front(void *param) // 将数据发送到电机，并从电机接收数据
 {
     TickType_t last_wake_time = xTaskGetTickCount();
-	HAL_TIM_Base_Start_IT(&htim13);
+	
     while (1)
     {
         err_check_front = 0;
@@ -173,9 +173,9 @@ void MotorControlTask_Front(void *param) // 将数据发送到电机，并从电
             for (int j = 0; j < 3; j++)
             {
                  
-                GoMotorSend(&leg[i].joint[j].motor, leg[i].joint[j].exp_torque / 6.33f / leg[i].joint[j].inv_motor,
-                            leg[i].joint[j].exp_omega * 6.33f * leg[i].joint[j].inv_motor,
-                            leg[i].joint[j].exp_rad * 6.33f * leg[i].joint[j].inv_motor + leg[i].joint[j].pos_offset + setup_offset[i][j],
+                GoMotorSend(&leg[i].joint[j].motor, leg[i].joint[j].exp_torque / 6.33f * leg[i].joint[j].inv_motor,
+                            leg[i].joint[j].exp_omega * 6.33f / leg[i].joint[j].inv_motor,
+                            leg[i].joint[j].exp_rad * 6.33f / leg[i].joint[j].inv_motor + leg[i].joint[j].pos_offset + setup_offset[i][j],
                             leg[i].joint[j].Kp, leg[i].joint[j].Kd);
 
 
@@ -196,7 +196,7 @@ void MotorControlTask_Front(void *param) // 将数据发送到电机，并从电
                  }
             
         }
-        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(2));
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(3));
         if (reset_uart_front)
         {
 
@@ -231,9 +231,9 @@ void MotorControlTask_Back(void *param) // 将数据发送到电机，并从电�
             for (int j = 0; j < 3; j++)
             {
                  
-                GoMotorSend(&leg[i].joint[j].motor, leg[i].joint[j].exp_torque / 6.33f / leg[i].joint[j].inv_motor,
-                            leg[i].joint[j].exp_omega * 6.33f * leg[i].joint[j].inv_motor,
-                            leg[i].joint[j].exp_rad * 6.33f * leg[i].joint[j].inv_motor + leg[i].joint[j].pos_offset + setup_offset[i][j],
+                GoMotorSend(&leg[i].joint[j].motor, leg[i].joint[j].exp_torque / 6.33f * leg[i].joint[j].inv_motor,
+                            leg[i].joint[j].exp_omega * 6.33f / leg[i].joint[j].inv_motor,
+                            leg[i].joint[j].exp_rad * 6.33f / leg[i].joint[j].inv_motor + leg[i].joint[j].pos_offset + setup_offset[i][j],
                             leg[i].joint[j].Kp, leg[i].joint[j].Kd);
 
 
@@ -254,7 +254,7 @@ void MotorControlTask_Back(void *param) // 将数据发送到电机，并从电�
                  }
             
         }
-        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(2));
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(3));
         if (reset_uart_back)
         {
             HAL_UART_DMAStop(&huart3);
@@ -356,9 +356,9 @@ void MotorSendTask(void *param) // 将电机的数据发送到PC上
         {
             for (int j = 0; j < 3; j++)
             {
-                legs_state.leg[i].joint[j].rad = leg[i].joint[j].inv_motor * (leg[i].joint[j].motor.state.rad - leg[i].joint[j].pos_offset - setup_offset[i][j]) / 6.33f;
-                legs_state.leg[i].joint[j].omega = leg[i].joint[j].inv_motor * (leg[i].joint[j].motor.state.velocity) / 6.33f;
-                legs_state.leg[i].joint[j].torque = leg[i].joint[j].inv_motor * (leg[i].joint[j].motor.state.torque) * 6.33f;
+                legs_state.leg[i].joint[j].rad = (leg[i].joint[j].motor.state.rad - leg[i].joint[j].pos_offset - setup_offset[i][j]) / 6.33f*leg[i].joint[j].inv_motor;
+                legs_state.leg[i].joint[j].omega = (leg[i].joint[j].motor.state.velocity) / 6.33f*leg[i].joint[j].inv_motor;
+                legs_state.leg[i].joint[j].torque = (leg[i].joint[j].motor.state.torque) * 6.33f/leg[i].joint[j].inv_motor;
             }
             legs_state.leg[i].wheel.omega=leg[i].wheel.inv_wheel * leg[i].wheel.wheel_.velocity;
             legs_state.leg[i].wheel.torque=leg[i].wheel.inv_wheel * leg[i].wheel.wheel_.torque;
@@ -420,7 +420,14 @@ void MotorRecvTask(void *param) // 从PC接收电机的期望值
         setup_offset[i][1] = leg[i].joint[1].motor.state.rad;
         setup_offset[i][2] = leg[i].joint[2].motor.state.rad;
     }
-    allow_send = 1;                                 // 允许发送数据
+    while(HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_15))
+    {
+			vTaskDelay(50);
+    }
+		allow_send = 1;
+		vTaskDelay(1000);
+		HAL_TIM_Base_Start_IT(&htim13);
+                                     // 允许发送数据
     //xSemaphoreTake(cdc_recv_semphr, portMAX_DELAY); // 等待第一个数据帧到来
     while (1)
     {
